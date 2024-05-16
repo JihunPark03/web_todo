@@ -13,10 +13,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response,{status: 200});
 }
 
-//할일 받고 출력
+//할일 추가
 export async function POST(request: NextRequest) {
 
     const {title} = await request.json();
+
+    if (title === undefined||""){
+
+        const errMessage={
+            message: "할일을 작성해주세요"
+        } 
+        return NextResponse.json(errMessage,{status: 422});
+
+    }
 
     const addedTodo = await addATodos({title});
 

@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { timeStamp } from "console";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs , getDoc, doc, setDoc, Timestamp, deleteDoc} from "firebase/firestore";
+import { getFirestore, collection, getDocs , getDoc, doc, setDoc, Timestamp, deleteDoc, updateDoc} from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: process.env.API_KEY,
@@ -54,7 +54,12 @@ export async function addATodos({title}){
     }
     await setDoc(newTodoRef, newTodoData);
     
-    return newTodoData;
+    return {
+        id: newTodoRef.id,
+        title: title,
+        is_done: false,
+        created_at: createAtTimestamp.toDate(), 
+    };
 }
 
 //단일 할일 조회
@@ -87,10 +92,41 @@ export async function fetchATodo(id){
 //단일 할일 삭제
 export async function deleteATodo(id){
 
-    await deleteDoc(doc(db, "todos", id));
-    return null
+    // instead of just deleting, check if the file exist
 
+    const fetchedTodo = await fetchATodo(id);
+
+    if (fetchedTodo === null){
+        return null;
+    }
+
+    await deleteDoc(doc(db, "todos", id));
+    return fetchedTodo;
 }
 
 
-export default { fetchTodos, addATodos, fetchATodo, deleteATodo}
+//단일 할일 수정
+export async function editATodo(id, {title, is_done}){ // id는 변수로 받고 나머지는 json 파일로 받기
+
+    const fetchedTodo = await fetchATodo(id);
+
+    if (fetchedTodo === null){
+        return null;
+    }
+
+    const todoRef = doc(db, "todos", id);
+    
+    await updateDoc(todoRef, {
+      title: title,
+      is_done: is_done
+    });
+
+    return {
+        id: id,
+        title: title,
+        is_done: is_done,
+        created_at: fetchATodo.created_at
+    };
+}
+
+export default { fetchTodos, addATodos, fetchATodo, deleteATodo, editATodo}
